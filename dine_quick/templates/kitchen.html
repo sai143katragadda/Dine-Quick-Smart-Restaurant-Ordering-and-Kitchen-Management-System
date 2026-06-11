@@ -1,0 +1,306 @@
+{% extends "base.html" %}
+{% block title %}Kitchen Monitor | {{ settings.restaurant_name }}{% endblock %}
+
+{% block head %}
+<style>
+  body { background: #121212; }
+  .topnav { background: #0d0d0d; }
+
+  .kitchen-header {
+    background: #0d0d0d;
+    padding: 20px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid #222;
+  }
+  .kitchen-title {
+    font-family: var(--font-display);
+    font-size: 1.3rem; font-weight: 800; color: #fff;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .kitchen-live {
+    display: flex; align-items: center; gap: 7px;
+    font-size: .82rem; color: #aaa;
+  }
+  .live-dot {
+    width: 8px; height: 8px;
+    background: #4CAF50; border-radius: 50%;
+    animation: pulse-dot 1.4s ease-in-out infinite;
+  }
+  @keyframes pulse-dot {
+    0%,100% { opacity:1; transform:scale(1); }
+    50% { opacity:.4; transform:scale(.75); }
+  }
+  .kitchen-stats {
+    display: flex; gap: 16px;
+  }
+  .k-stat {
+    background: #1e1e1e; border-radius: 10px;
+    padding: 10px 18px; text-align: center;
+  }
+  .k-stat-num {
+    font-family: var(--font-display); font-weight: 800;
+    font-size: 1.5rem; color: var(--saffron); line-height: 1;
+  }
+  .k-stat-label {
+    font-size: .72rem; color: #888; margin-top: 2px;
+    text-transform: uppercase; letter-spacing: .06em;
+  }
+
+  .kitchen-body { padding: 24px; }
+
+  /* Columns */
+  .kitchen-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+  }
+  @media(max-width:900px) { .kitchen-columns { grid-template-columns: 1fr 1fr; } }
+  @media(max-width:600px) { .kitchen-columns { grid-template-columns: 1fr; } }
+
+  .k-col-header {
+    padding: 12px 16px;
+    border-radius: 10px 10px 0 0;
+    font-family: var(--font-display);
+    font-weight: 700; font-size: .9rem;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .k-col-header.placed  { background: #2D2200; color: var(--amber); }
+  .k-col-header.cooking { background: #2A1400; color: var(--saffron-lt); }
+  .k-col-header.served  { background: #0D2010; color: #5CCC7A; }
+  .k-col-body { display: flex; flex-direction: column; gap: 12px; min-height: 200px; }
+
+  /* Order tickets */
+  .ticket {
+    background: #1c1c1c;
+    border-radius: 12px;
+    border: 1px solid #2a2a2a;
+    overflow: hidden;
+    animation: ticketIn .25s ease;
+  }
+  @keyframes ticketIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+  .ticket-head {
+    padding: 12px 14px;
+    border-bottom: 1px solid #2a2a2a;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .ticket-table {
+    font-family: var(--font-display); font-weight: 800;
+    font-size: 1.2rem; color: #fff;
+  }
+  .ticket-id { font-size: .75rem; color: #666; }
+  .ticket-time {
+    font-size: .75rem; color: #888;
+    background: #2a2a2a; border-radius: 6px;
+    padding: 3px 8px;
+  }
+  .ticket-time.urgent { color: var(--saffron-lt); background: #2A1400; }
+  .ticket-items { padding: 12px 14px; }
+  .ticket-item {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 6px 0;
+    border-bottom: 1px solid #242424;
+    color: #ddd; font-size: .88rem;
+  }
+  .ticket-item:last-child { border-bottom: none; }
+  .ticket-qty {
+    font-family: var(--font-display); font-weight: 800;
+    font-size: 1.1rem; color: var(--saffron); line-height: 1.1;
+    min-width: 22px;
+  }
+  .ticket-item-name { flex: 1; }
+  .ticket-prep { font-size: .72rem; color: #666; }
+  .ticket-notes {
+    padding: 8px 14px;
+    border-top: 1px dashed #2a2a2a;
+    font-size: .8rem; color: var(--amber);
+    display: flex; gap: 6px; align-items: flex-start;
+  }
+  .ticket-footer {
+    padding: 10px 14px;
+    border-top: 1px solid #2a2a2a;
+    display: flex; gap: 8px;
+  }
+  .ticket-btn {
+    flex: 1; padding: 9px 12px;
+    border-radius: 8px; border: none;
+    font-family: var(--font-display);
+    font-weight: 700; font-size: .82rem;
+    cursor: pointer; transition: all .18s;
+  }
+  .ticket-btn.start { background: var(--saffron); color: #fff; }
+  .ticket-btn.start:hover { background: var(--saffron-dk); }
+  .ticket-btn.done  { background: var(--leaf); color: #fff; }
+  .ticket-btn.done:hover  { background: #1f4d2c; }
+
+  .empty-col {
+    text-align: center; padding: 40px 20px;
+    color: #444; font-size: .85rem;
+  }
+  .empty-col .e-icon { font-size: 2rem; margin-bottom: 8px; }
+
+  .k-col-count {
+    background: rgba(255,255,255,.1);
+    border-radius: 99px; padding: 2px 8px;
+    font-size: .75rem; font-weight: 700;
+  }
+
+  .sound-toggle {
+    background: #2a2a2a; color: #aaa;
+    border: none; border-radius: 8px;
+    padding: 8px 14px; cursor: pointer;
+    font-size: .82rem; transition: all .18s;
+  }
+  .sound-toggle:hover { background: #333; color: #fff; }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="kitchen-header">
+  <div class="kitchen-title">
+    🍳 Kitchen Monitor
+    <div class="kitchen-live"><div class="live-dot"></div> Live</div>
+  </div>
+  <div class="kitchen-stats" id="kitchenStats">
+    <div class="k-stat"><div class="k-stat-num" id="statPlaced">0</div><div class="k-stat-label">New</div></div>
+    <div class="k-stat"><div class="k-stat-num" id="statCooking">0</div><div class="k-stat-label">Cooking</div></div>
+  </div>
+</div>
+
+<div class="kitchen-body">
+  <div class="kitchen-columns">
+    <!-- Placed -->
+    <div>
+      <div class="k-col-header placed">📋 New Orders <span class="k-col-count" id="placedCount">0</span></div>
+      <div class="k-col-body" id="placedOrders">
+        <div class="empty-col"><div class="e-icon">✅</div>No new orders</div>
+      </div>
+    </div>
+    <!-- Cooking -->
+    <div>
+      <div class="k-col-header cooking">🔥 Cooking <span class="k-col-count" id="cookingCount">0</span></div>
+      <div class="k-col-body" id="cookingOrders">
+        <div class="empty-col"><div class="e-icon">🍽️</div>Nothing cooking</div>
+      </div>
+    </div>
+    <!-- Served -->
+    <div>
+      <div class="k-col-header served">✅ Recently Served <span class="k-col-count" id="servedCount">0</span></div>
+      <div class="k-col-body" id="servedOrders">
+        <div class="empty-col"><div class="e-icon">📦</div>None yet</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  let prevOrderIds = new Set();
+  let servedRecent = [];   // keep last 10 served
+
+  function minutesAgo(dateStr) {
+    const d = new Date(dateStr.replace(' ', 'T'));
+    const diff = Math.floor((Date.now() - d.getTime()) / 60000);
+    if (diff < 1) return 'just now';
+    if (diff === 1) return '1 min ago';
+    return diff + ' min ago';
+  }
+
+  function renderTicket(o, colType) {
+    const ageMin = Math.floor((Date.now() - new Date(o.created_at.replace(' ','T')).getTime()) / 60000);
+    const urgent = ageMin >= 15 && colType !== 'served';
+    const itemsHtml = o.items.map(i => `
+      <div class="ticket-item">
+        <div class="ticket-qty">${i.quantity}×</div>
+        <div class="ticket-item-name">${i.name} <span class="ticket-prep">⏱ ${i.prep_time}m</span></div>
+      </div>`).join('');
+    const notesHtml = o.notes ? `<div class="ticket-notes">📝 ${o.notes}</div>` : '';
+    let footerHtml = '';
+    if (colType === 'placed') {
+      footerHtml = `<div class="ticket-footer">
+        <button class="ticket-btn start" onclick="updateStatus(${o.id},'Cooking')">🔥 Start Cooking</button>
+      </div>`;
+    } else if (colType === 'cooking') {
+      footerHtml = `<div class="ticket-footer">
+        <button class="ticket-btn done" onclick="updateStatus(${o.id},'Served')">✅ Mark Served</button>
+      </div>`;
+    }
+    return `
+      <div class="ticket" id="ticket-${o.id}">
+        <div class="ticket-head">
+          <div>
+            <div class="ticket-table">Table ${o.table_number}</div>
+            <div class="ticket-id">#${o.id}</div>
+          </div>
+          <div class="ticket-time ${urgent ? 'urgent' : ''}">${minutesAgo(o.created_at)}${urgent ? ' ⚠️' : ''}</div>
+        </div>
+        <div class="ticket-items">${itemsHtml}</div>
+        ${notesHtml}
+        ${footerHtml}
+      </div>`;
+  }
+
+  async function updateStatus(orderId, status) {
+    const btn = document.querySelector(`#ticket-${orderId} .ticket-btn`);
+    if (btn) { btn.disabled = true; btn.textContent = '…'; }
+    await fetch(`/api/orders/${orderId}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status })
+    });
+    loadOrders();
+  }
+
+  async function loadOrders() {
+    const res = await fetch('/api/orders/active');
+    const orders = await res.json();
+
+    const placed  = orders.filter(o => o.status === 'Placed');
+    const cooking = orders.filter(o => o.status === 'Cooking');
+
+    // Check for new orders
+    const currentIds = new Set(orders.map(o => o.id));
+    for (const id of currentIds) {
+      if (!prevOrderIds.has(id) && prevOrderIds.size > 0) {
+        showToast('New order arrived! 🛎️', 'info');
+      }
+    }
+    prevOrderIds = currentIds;
+
+    document.getElementById('statPlaced').textContent  = placed.length;
+    document.getElementById('statCooking').textContent = cooking.length;
+    document.getElementById('placedCount').textContent  = placed.length;
+    document.getElementById('cookingCount').textContent = cooking.length;
+
+    const pc = document.getElementById('placedOrders');
+    const cc = document.getElementById('cookingOrders');
+
+    pc.innerHTML = placed.length ? placed.map(o => renderTicket(o,'placed')).join('') :
+      '<div class="empty-col"><div class="e-icon">✅</div>No new orders</div>';
+    cc.innerHTML = cooking.length ? cooking.map(o => renderTicket(o,'cooking')).join('') :
+      '<div class="empty-col"><div class="e-icon">🍽️</div>Nothing cooking</div>';
+
+    // Served: fetch all, filter served, show latest 8
+    const resAll = await fetch('/api/orders/all');
+    const all = await resAll.json();
+    const served = all.filter(o => o.status === 'Served').slice(0, 8);
+    document.getElementById('servedCount').textContent = served.length;
+    const sc = document.getElementById('servedOrders');
+    if (!served.length) {
+      sc.innerHTML = '<div class="empty-col"><div class="e-icon">📦</div>None yet</div>';
+    } else {
+      sc.innerHTML = served.map(o => `
+        <div class="ticket">
+          <div class="ticket-head">
+            <div><div class="ticket-table">Table ${o.table_number}</div><div class="ticket-id">#${o.id}</div></div>
+            <div class="ticket-time">${minutesAgo(o.updated_at)}</div>
+          </div>
+          <div class="ticket-items">${o.items.map(i=>`<div class="ticket-item"><div class="ticket-qty">${i.quantity}×</div><div class="ticket-item-name">${i.name}</div></div>`).join('')}</div>
+        </div>`).join('');
+    }
+  }
+
+  loadOrders();
+  setInterval(loadOrders, 8000);
+</script>
+{% endblock %}
