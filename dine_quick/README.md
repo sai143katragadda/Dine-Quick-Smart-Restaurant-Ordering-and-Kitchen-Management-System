@@ -108,6 +108,6 @@ States are stored in the `orders` table and drive UI display across customer and
 - Default GST: 5% | Currency: ₹
 
 ## Project Demonstration Video
-- **Url** - 
+- **Url** - https://drive.google.com/file/d/1Ec8iEv6fps7LBsQ-BM8kR9m_FkUrq329/view?usp=drive_link
 
 
