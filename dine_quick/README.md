@@ -106,3 +106,6 @@ States are stored in the `orders` table and drive UI display across customer and
 - **12 tables** (2-seat, 4-seat, 6-seat mix)
 - **20 menu items** across 4 categories
 - Default GST: 5% | Currency: ₹
+
+## Project Demonstration Video
+- **Url** - 
